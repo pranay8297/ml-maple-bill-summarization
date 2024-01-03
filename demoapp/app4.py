@@ -32,12 +32,13 @@ model = CrossEncoder('vectara/hallucination_evaluation_model')
 
 def get_mgl_sections_file():
     
-    if os.path.isfile("demoapp/most_bills_mgl.csv"):
-        return pd.read_csv("demoapp/most_bills_mgl.csv")
+    if os.path.isfile("demoapp/all_bills_with_mgl.pq"):
+        return pd.read_parquet("demoapp/all_bills_with_mgl.pq")
     else:
-        print("Downloading MGL Sections CSV - about 2.5 GB")
-        urllib.request.urlretrieve("https://munira.blob.core.windows.net/public/most_bills_mgl.csv", "demoapp/most_bills_mgl.csv")
-        return pd.read_csv("demoapp/most_bills_mgl.csv")
+        print("May take a few minutes")
+        urllib.request.urlretrieve("https://drive.google.com/file/d/1eYMmxW4gLyh7Zxh8BBJTvMOUNtdbK5B3/view?usp=share_link", "demoapp/all_bills_with_mgl.pq")
+        # urllib.request.urlretrieve("https://munira.blob.core.windows.net/public/all_bills_with_mgl.pq", "demoapp/all_bills_with_mgl.pq")
+        return pd.read_parquet("demoapp/most_bills_mgl.pq")
 
 df = get_mgl_sections_file()
 
@@ -82,8 +83,8 @@ def find_bills(bill_number, bill_title):
 
 bill_info = df["Bill Info"].values
 
-bills_to_select = {s.split(": ")[0]: s.split(": ")[1] for s in bill_info}
-print(bills_to_select)
+bills_to_select = {parts[0]: parts[1] for s in bill_info if s is not None and (parts := s.split(": "))}
+
 
 selectbox_options = [f"{number}: {title}" for number, title in bills_to_select.items()]
 option = st.selectbox(
@@ -93,9 +94,8 @@ option = st.selectbox(
 
 # Extracting the bill number from the selected option
 selected_num = option.split(":")[0]
-print(selected_num)
 selected_title = option.split(":")[1]
-print(selected_title)
+
 
 # bill_content, bill_title, bill_number, masslaw = find_bills(selected_num, selected_title)
 bill_content, bill_title, bill_number = find_bills(selected_num, selected_title)
@@ -137,13 +137,16 @@ def generate_response(bill_number, text, category):
     os.environ['OPENAI_API_KEY'] = API_KEY
     # loader = TextLoader("demoapp/extracted_mgl.txt").load()
     # bills_12_with_mgl.loc[bills_12_with_mgl['BillNumber'] == "H489", 'combined_MGL_y']
-    mgl_ref = df.loc[df['BillNumber']== bill_number, 'combined_MGL']
+    mgl_ref = df.loc[df['BillNumber']== bill_number, 'Combined_MGL']
     
-    mgl_ref = mgl_ref.values[0]
+    mgl_ref = str(mgl_ref.values[0])
     
-    
+    print("Mgl ref", mgl_ref)
     text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
-    documents = [Document(page_content=x) for x in text_splitter.split_text(mgl_ref)]
+    if mgl_ref is not None:
+        documents = [Document(page_content=x) for x in text_splitter.split_text(mgl_ref)]
+    else:
+        documents = ""
     print(len(documents))
     # text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
     # documents = text_splitter.split_documents(loader)
@@ -185,32 +188,32 @@ def generate_response(bill_number, text, category):
 
 
 #Function to update or append to CSV
-def update_csv(bill_num, title, summarized_bill, category, tag, csv_file_path, rouge_scorer, cosine_sim_score, fact_const_score ):
-    try:
-        df = pd.read_csv(csv_file_path)
-    except FileNotFoundError:
-        # If the file does not exist, create a new DataFrame
-        df = pd.DataFrame(columns=["Bill Number", "Bill Title", "Summarized Bill", "Category", "Rouge-1", "Rouge-2", "Rouge-L, Cosine Similarity, Fact Consistency"])
-    mask = df["Bill Number"] == bill_num
-    if mask.any():
-        df.loc[mask, "Bill Title"] = title
-        df.loc[mask, "Summarized Bill"] = summarized_bill
-        df.loc[mask, "Category"] = category
-        # df.loc[mask, "Tags"] = tag
-        df.loc[mask, "Rouge-1"] = f"{rouge_scorer['rouge1'].fmeasure:.2f}"
-        df.loc[mask, "Rouge-2"] = f"{rouge_scorer['rouge2'].fmeasure:.2f}"
-        df.loc[mask, "Rouge-L"] = f"{rouge_scorer['rougeL'].fmeasure:.2f}"
-        df.loc[mask, "Cosine Similarity"] = cosine_sim_score
-        df.loc[mask, "Fact Consistency"] = fact_const_score
+# def update_csv(bill_num, title, summarized_bill, category, tag, csv_file_path, rouge_scorer, cosine_sim_score, fact_const_score ):
+#     try:
+#         df = pd.read_csv(csv_file_path)
+#     except FileNotFoundError:
+#         # If the file does not exist, create a new DataFrame
+#         df = pd.DataFrame(columns=["Bill Number", "Bill Title", "Summarized Bill", "Category", "Rouge-1", "Rouge-2", "Rouge-L, Cosine Similarity, Fact Consistency"])
+#     mask = df["Bill Number"] == bill_num
+#     if mask.any():
+#         df.loc[mask, "Bill Title"] = title
+#         df.loc[mask, "Summarized Bill"] = summarized_bill
+#         df.loc[mask, "Category"] = category
+#         # df.loc[mask, "Tags"] = tag
+#         df.loc[mask, "Rouge-1"] = f"{rouge_scorer['rouge1'].fmeasure:.2f}"
+#         df.loc[mask, "Rouge-2"] = f"{rouge_scorer['rouge2'].fmeasure:.2f}"
+#         df.loc[mask, "Rouge-L"] = f"{rouge_scorer['rougeL'].fmeasure:.2f}"
+#         df.loc[mask, "Cosine Similarity"] = cosine_sim_score
+#         df.loc[mask, "Fact Consistency"] = fact_const_score
         
-    else:
-        new_bill = pd.DataFrame(columns=["Bill Number", "Bill Title", "Summarized Bill", "Category", "Rouge-1", "Rouge-2", "Rouge-L, Cosine Similarity, Fact Consistency"])
-        df = pd.concat([df, new_bill], ignore_index=True)
+#     else:
+#         new_bill = pd.DataFrame(columns=["Bill Number", "Bill Title", "Summarized Bill", "Category", "Rouge-1", "Rouge-2", "Rouge-L, Cosine Similarity, Fact Consistency"])
+#         df = pd.concat([df, new_bill], ignore_index=True)
     
-    df.to_csv(csv_file_path, index=False)
-    return df
+#     df.to_csv(csv_file_path, index=False)
+#     return df
 
-csv_file_path = "demoapp/new_bills1.csv"
+# csv_file_path = "demoapp/new_bills1.csv"
 
 
 answer_container = st.container()
