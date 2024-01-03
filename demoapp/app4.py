@@ -16,6 +16,8 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.document_loaders import TextLoader
 from langchain.docstore.document import Document
+import urllib.request
+
 
 from sidebar import *
 from tagging import *
@@ -28,7 +30,16 @@ sbar()
 
 model = CrossEncoder('vectara/hallucination_evaluation_model')
 
-df = pd.read_csv("demoapp/two-thirds_bills_mgl.csv")
+def get_mgl_sections_file():
+    
+    if os.path.isfile("demoapp/most_bills_mgl.csv"):
+        return pd.read_csv("demoapp/most_bills_mgl.csv")
+    else:
+        print("Downloading MGL Sections CSV - about 2.5 GB")
+        urllib.request.urlretrieve("https://munira.blob.core.windows.net/public/most_bills_mgl.csv", "demoapp/most_bills_mgl.csv")
+        return pd.read_csv("demoapp/most_bills_mgl.csv")
+
+df = get_mgl_sections_file()
 
 def find_bills(bill_number, bill_title):
     """input:
