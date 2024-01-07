@@ -20,6 +20,11 @@ from langchain.docstore.document import Document
 from sidebar import *
 from tagging import *
 
+# This code only implements text summarization, category selection and tagging only for 12 bills
+# Uses OpenAIEmbeddings and Vectorstore to split the MGL text into chunks and storing it and performing vector search
+
+# Changed the code to use selected bill number from the app to access the MGL text for that bill (original code used combined MGL text from all the extracted sections for all 12 bills)
+
 
 st.set_page_config(page_title="Summarize and Tagging MA Bills", layout='wide')
 st.title('Summarize Bills')
