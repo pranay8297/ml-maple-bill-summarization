@@ -38,7 +38,7 @@ def get_mgl_sections_file():
         print("May take a few minutes")
         urllib.request.urlretrieve("https://drive.google.com/file/d/1eYMmxW4gLyh7Zxh8BBJTvMOUNtdbK5B3/view?usp=share_link", "demoapp/all_bills_with_mgl.pq")
         # urllib.request.urlretrieve("https://munira.blob.core.windows.net/public/all_bills_with_mgl.pq", "demoapp/all_bills_with_mgl.pq")
-        return pd.read_parquet("demoapp/most_bills_mgl.pq")
+        return pd.read_parquet("demoapp/all_bills_with_mgl.pq")
 
 df = get_mgl_sections_file()
 

@@ -15,6 +15,7 @@ from sentence_transformers import CrossEncoder
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.document_loaders import TextLoader
+from langchain.docstore.document import Document
 
 from sidebar import *
 from tagging import *
@@ -30,7 +31,7 @@ sbar()
 model = CrossEncoder('vectara/hallucination_evaluation_model')
 
 # load the dataset
-df = pd.read_csv("demoapp/12billswithmgl.csv")
+df = pd.read_csv("demoapp/new_12_bills.csv")
 
 
 def find_bills(bill_number, bill_title):
@@ -85,6 +86,27 @@ selected_title = option.split(":")[1]
 # bill_content, bill_title, bill_number, masslaw = find_bills(selected_num, selected_title)
 bill_content, bill_title, bill_number = find_bills(selected_num, selected_title)
 
+#Column name of the combined MGL text
+
+
+def mgl_to_vectorstore(bill_number):
+    API_KEY = st.session_state["OPENAI_API_KEY"]
+    os.environ['OPENAI_API_KEY'] = API_KEY
+    
+    mgl_ref = df.loc[df['BillNumber']== bill_number, 'Combined_MGL']
+    mgl_ref = mgl_ref.values[0]
+    
+    
+    
+    text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
+    documents = [Document(page_content=x) for x in text_splitter.split_text(mgl_ref)]
+    print(len(documents))
+    # text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
+    # documents = text_splitter.split_documents(loader)
+    
+    vectorstore = Chroma.from_documents(documents, OpenAIEmbeddings())
+    retriever = vectorstore.as_retriever()
+    return retriever
 
 def generate_categories(text):
     """
@@ -156,18 +178,11 @@ def generate_categories(text):
 #     return response
 
 
-def generate_response(text, category):
+def generate_response(retriever, text, category):
     """Function to generate response"""
 
     API_KEY = st.session_state["OPENAI_API_KEY"]
     os.environ['OPENAI_API_KEY'] = API_KEY
-
-    loader = TextLoader("demoapp/extracted_mgl.txt").load()
-    text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
-    documents = text_splitter.split_documents(loader)
-    
-    vectorstore = Chroma.from_documents(documents, OpenAIEmbeddings())
-    retriever = vectorstore.as_retriever()
 
         
     template = """You are a trustworthy assistant for question-answering tasks.
@@ -187,13 +202,14 @@ def generate_response(text, category):
             | StrOutputParser()
         )
     query = f""" Can you please explain what the following MA bill means to a regular resident without specialized knowledge? 
-            Please provide a one paragraph summary in 4 sentences. Please be direct and concise for the busy reader.
-            Note that the bill refers to specific existing sections of the Mass General Laws. Use the information from those sections in your context to construct your summary.
+            Please provide a one paragraph summary in 4 sentences. Please be simple, direct and concise for the busy reader
+            Note that the bill refers to specific existing chapters and sections of the Mass General Laws. Use the information from those chapters and sections in your context to construct your summary
             Summarize the bill that reads as follows:\n{text}\n\n
             
             After generating summary, output Category: {category}.
             Then, output top 3 tags in this specific category from the list of tags {tags_for_bill} that are relevant to this bill. \n"""
             # Do not output the tags outside from the list. \n
+            # """
             # """
     with get_openai_callback() as cb:
         response = rag_chain.invoke(query)
@@ -233,9 +249,9 @@ with answer_container:
 
     if submit_button:
         with st.spinner("Working hard..."):
-
+            retriever = mgl_to_vectorstore(bill_number)
             category_response = generate_categories(bill_content)
-            response = generate_response(bill_content, category_response)
+            response = generate_response(retriever, bill_content, category_response)
             #tag_response = generate_tags(category_response, bill_content)
     
             with col1:
