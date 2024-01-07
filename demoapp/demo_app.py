@@ -23,6 +23,10 @@ from sidebar import *
 from tagging import *
 
 
+# This code only implements text summarization, category selection and tagging for all the bills (no MGL sections data is available for ~1300 bills )
+# Uses OpenAIEmbeddings and Vectorstore to split the MGL text into chunks and storing it and performing vector search
+
+
 st.set_page_config(page_title="Summarize and Tagging MA Bills", layout='wide')
 st.title('Summarize Bills')
 
