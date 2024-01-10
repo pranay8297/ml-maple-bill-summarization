@@ -1,3 +1,8 @@
+"""
+This code only implements text summarization, category selection and tagging for all the bills (no MGL sections data is available for ~1300 bills )
+MGL sections in 'all_bills_with_mgl.pq' files were generated using extract_mgl_section.py 
+Uses OpenAIEmbeddings and Vectorstore to split the MGL text into chunks and storing it and performing vector search
+"""
 import streamlit as st
 import pandas as pd
 import os
@@ -23,9 +28,6 @@ from sidebar import *
 from tagging import *
 
 
-# This code only implements text summarization, category selection and tagging for all the bills (no MGL sections data is available for ~1300 bills )
-# Uses OpenAIEmbeddings and Vectorstore to split the MGL text into chunks and storing it and performing vector search
-
 
 st.set_page_config(page_title="Summarize and Tagging MA Bills", layout='wide')
 st.title('Summarize Bills')
@@ -34,9 +36,19 @@ sbar()
 
 model = CrossEncoder('vectara/hallucination_evaluation_model')
 
-def get_mgl_sections_file():
-    
-    if os.path.isfile("demoapp/all_bills_with_mgl.pq"):
+def get_mgl_sections_file() -> pd.DataFrame:
+    """
+    Retrieves a Parquet file containing sections of the Massachusetts General Laws (MGL) associated with various bills.
+
+    This function checks for the presence of a file named 'all_bills_with_mgl.pq' in the 'demoapp' directory. If the file exists, it is read into a pandas DataFrame and returned. If the file does not exist, the function attempts to download it from a specified Google Drive link. The download may take a few minutes. Once downloaded, the file is again read into a pandas DataFrame and returned.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the data from the 'all_bills_with_mgl.pq' file.
+
+    Raises:
+        FileNotFoundError: If the file cannot be downloaded or read.
+    """
+    if os.path.isfile("demoapp/all_bills_with_mgl.pq"): # this file was generated using functions in the extract_mgl_sections.py
         return pd.read_parquet("demoapp/all_bills_with_mgl.pq")
     else:
         print("May take a few minutes")
@@ -44,9 +56,10 @@ def get_mgl_sections_file():
         # urllib.request.urlretrieve("https://munira.blob.core.windows.net/public/all_bills_with_mgl.pq", "demoapp/all_bills_with_mgl.pq")
         return pd.read_parquet("demoapp/all_bills_with_mgl.pq")
 
+
 df = get_mgl_sections_file()
 
-def find_bills(bill_number, bill_title):
+def find_bills(bill_number: str, bill_title: str) -> tuple[str, str, str]:
     """input:
     args: bill_number: (str), Use the number of the bill to find its title and content
     """
@@ -69,24 +82,10 @@ def find_bills(bill_number, bill_title):
         st.error("Cannot find such bill from the source")
         
 
-# bills_to_select = {
-#     '#H3121': 'An Act relative to the open meeting law',
-#     '#S2064': 'An Act extending the public records law to the Governor and the Legislature',
-#     '#H711': 'An Act providing a local option for ranked choice voting in municipal elections',
-#     '#S1979': 'An Act establishing a jail and prison construction moratorium',
-#     '#H489': 'An Act providing affordable and accessible high-quality early education and care to promote child development and well-being and support the economy in the Commonwealth',
-#     '#S2014': 'An Act relative to collective bargaining rights for legislative employees',
-#     '#S301': 'An Act providing affordable and accessible high quality early education and care to promote child development and well-being and support the economy in the Commonwealth',
-#     '#H3069': 'An Act relative to collective bargaining rights for legislative employees',
-#     '#S433': 'An Act providing a local option for ranked choice voting in municipal elections',
-#     '#H400': 'An Act relative to vehicle recalls',
-#     '#H538': 'An Act to Improve access, opportunity, and capacity in Massachusetts vocational-technical education',
-#     '#S257': 'An Act to end discriminatory outcomes in vocational school admissions'
-# }
-
-
+# Bills with bill number and title for a dropdown menu on the app
 bill_info = df["Bill Info"].values
 
+# creates a dictionary of bill number and title from the selected bill
 bills_to_select = {parts[0]: parts[1] for s in bill_info if s is not None and (parts := s.split(": "))}
 
 
@@ -128,7 +127,7 @@ def generate_categories(text):
 
     
     llm = LLMChain(
-            llm = ChatOpenAI(openai_api_key=API_KEY, temperature=0, model='gpt-4'), prompt=prompt)
+            llm = ChatOpenAI(openai_api_key=API_KEY, temperature=0, model='gpt-4-1106-preview'), prompt=prompt)
     
     response = llm.predict(context = text, category = category_for_bill) # grab from tagging.py
     return response
@@ -141,17 +140,18 @@ def generate_response(bill_number, text, category):
     os.environ['OPENAI_API_KEY'] = API_KEY
     # loader = TextLoader("demoapp/extracted_mgl.txt").load()
     # bills_12_with_mgl.loc[bills_12_with_mgl['BillNumber'] == "H489", 'combined_MGL_y']
+    # grab MGL section based on selected bill number
     mgl_ref = df.loc[df['BillNumber']== bill_number, 'Combined_MGL']
     
     mgl_ref = str(mgl_ref.values[0])
     
-    print("Mgl ref", mgl_ref)
     text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
     if mgl_ref is not None:
+        #splits MGL text into chunks of sizes specified in the previous step
         documents = [Document(page_content=x) for x in text_splitter.split_text(mgl_ref)]
     else:
         documents = ""
-    print(len(documents))
+        
     # text_splitter = CharacterTextSplitter(chunk_size=4000, chunk_overlap=0)
     # documents = text_splitter.split_documents(loader)
     
@@ -188,7 +188,7 @@ def generate_response(bill_number, text, category):
         response = rag_chain.invoke(query)
         st.write(cb.total_tokens, cb.prompt_tokens, cb.completion_tokens, cb.total_cost)
         print("Total Tokens: ", cb.total_tokens, " Prompt Tokens: ", cb.prompt_tokens, "Completion Tokens" , cb.completion_tokens, "Total Cost", cb.total_cost)
-    return response, mgl_ref
+    return response
 
 
 #Function to update or append to CSV
@@ -229,7 +229,7 @@ with answer_container:
         with st.spinner("Working hard..."):
 
             category_response = generate_categories(bill_content)
-            response, mgl_ref = generate_response(bill_number,bill_content, category_response)
+            response= generate_response(bill_number,bill_content, category_response)
             #tag_response = generate_tags(category_response, bill_content)
     
             with col1:

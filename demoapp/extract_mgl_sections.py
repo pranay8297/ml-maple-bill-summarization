@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def csv_to_df_cleaned(bills_csv_file_path, bill_title_col_name, bill_num_col_name, docket_num_col_name, bill_text_col_name):
+def csv_to_df_cleaned(bills_csv_file_path: str, bill_title_col_name:str, bill_num_col_name:str, docket_num_col_name:str, bill_text_col_name:str) -> pd.DataFrame: 
     """
       Parameters:
     - bills_csv_file_path (str): Path to the CSV file containing columns "Title", "BillNumber", "DocketNumber", "DocumentText".
@@ -39,7 +39,7 @@ def csv_to_df_cleaned(bills_csv_file_path, bill_title_col_name, bill_num_col_nam
         logging.error('Error: The file %s was not found', bills_csv_file_path)
         return None 
 
-def extract_sections(bill_text):
+def extract_sections(bill_text: str) -> list: 
     """
     Extracts chapters and sections from a bill using regular expressions.
 
@@ -112,7 +112,7 @@ def extract_sections(bill_text):
                             
     return lists_with_both
 
-def apply_extract_sections(bills_df, bill_text_col_name, chap_sec_lists_col_name):
+def apply_extract_sections(bills_df: pd.DataFrame, bill_text_col_name: str, chap_sec_lists_col_name:str) -> pd.DataFrame:
     
     """
     Applies the 'extract_sections' function to a DataFrame containing the bills text
@@ -133,7 +133,7 @@ def apply_extract_sections(bills_df, bill_text_col_name, chap_sec_lists_col_name
     
     return bills_df
 
-def make_api_call(chapter_section_list):
+def query_section_text(chapter_section_list: tuple[str, str]) -> str | float:
     """
     Makes an API call to retrieve text data based on the provided chapter and section.
 
@@ -166,7 +166,7 @@ def make_api_call(chapter_section_list):
         pass
     
 
-def get_mgl_from_api(chapter_section_lists):
+def query_section_text_all_bills(chapter_section_lists: list[tuple[str, str]]) -> tuple[list[str], list[tuple[str, str]]]:
     """
     Retrieves text data for each chapter-section pair in the given sample; prints chapter-section numbers to keep track of the progress.
 
@@ -202,7 +202,7 @@ def get_mgl_from_api(chapter_section_lists):
         if len(pair) == 0:
             continue
         else:
-            string = make_api_call(pair)
+            string = query_section_text(pair)
             if string in {None, np.nan, "", "nan"}:
                 empty_responses.append(pair) #get a list of chapter-section pair where the API call returns an empty list
                 continue
@@ -212,7 +212,7 @@ def get_mgl_from_api(chapter_section_lists):
         
     return formatted_data, empty_responses
     
-def combine_mgl_sections(df, chap_sec_lists_col_name):
+def combine_mgl_sections(df: pd.DataFrame, chap_sec_lists_col_name: str) -> pd.DataFrame:
     """
     Modifies the provided DataFrame by applying the get_mgl function to a specified column, creating a new column 'MGL Ref'.
     Also prints the progress of getting MGL from the API
@@ -239,7 +239,7 @@ def combine_mgl_sections(df, chap_sec_lists_col_name):
         print(f"\rProgress: {progress:.2f}%", end='')
 
         # Get MGL sections from the API as well as chapter-section pairs with empty API call
-        mgl_list, empty_responses = get_mgl_from_api(row[chap_sec_lists_col_name])
+        mgl_list, empty_responses = query_section_text_all_bills(row[chap_sec_lists_col_name])
         df.at[index, 'MGL Sections List'] = mgl_list
         df.at[index, 'No MGL Found'] = empty_responses
         
@@ -249,7 +249,7 @@ def combine_mgl_sections(df, chap_sec_lists_col_name):
     return df
     
 
-def word_count(text):
+def word_count(text: str) -> int:
     """
     Calculates the number of words in the provided text.
 
@@ -267,7 +267,7 @@ def word_count(text):
         return 0
 
 
-def get_mgl_word_count(df, word_count_col_name):
+def get_mgl_word_count(df: pd.DataFrame, word_count_col_name: str) -> pd.DataFrame:
     """
     Applies the word_count function to a specified column in a DataFrame, creating a new column 'NumWords'.
 
@@ -286,7 +286,10 @@ def get_mgl_word_count(df, word_count_col_name):
     df[word_count_col_name] = df["Combined_MGL"].apply(word_count) # Column name hardcoded for now as it will be used in the demo_app.py
     return df
 
-def get_df_with_mgl(bills_csv_file_path, bill_title_col_name, bill_num_col_name, docket_num_col_name, bill_text_col_name, chap_sec_lists_col_name, word_count_col_name):
+def get_df_with_mgl(bills_csv_file_path: str, bill_title_col_name: str, 
+                    bill_num_col_name: str, docket_num_col_name: str, 
+                    bill_text_col_name: str, chap_sec_lists_col_name: str, 
+                    word_count_col_name: str) -> pd.DataFrame:
     
     """
     Processes a CSV file containing bill data and returns a DataFrame with additional columns for Massachusetts General Laws (MGL) sections and word counts.
