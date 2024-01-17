@@ -39,9 +39,11 @@ model = CrossEncoder('vectara/hallucination_evaluation_model')
 def get_mgl_sections_file() -> pd.DataFrame:
     """
     Retrieves a Parquet file containing sections of the Massachusetts General Laws (MGL) associated with various bills.
+    
+    all_bills_with_mgl.pq' file was generated using extract_mgl_sections.py and then saving the resulting pandas dataframe into parque format.
 
     This function checks for the presence of a file named 'all_bills_with_mgl.pq' in the 'demoapp' directory. If the file exists, it is read into a pandas DataFrame and returned. If the file does not exist, the function attempts to download it from a specified Google Drive link. The download may take a few minutes. Once downloaded, the file is again read into a pandas DataFrame and returned.
-
+    
     Returns:
         pandas.DataFrame: A DataFrame containing the data from the 'all_bills_with_mgl.pq' file.
 
@@ -104,7 +106,7 @@ selected_title = option.split(":")[1]
 bill_content, bill_title, bill_number = find_bills(selected_num, selected_title)
 
 
-def generate_categories(text):
+def generate_categories(text: str) -> str:
     """
     generate tags and categories
     parameters:
@@ -127,13 +129,13 @@ def generate_categories(text):
 
     
     llm = LLMChain(
-            llm = ChatOpenAI(openai_api_key=API_KEY, temperature=0, model='gpt-4-1106-preview'), prompt=prompt)
+            llm = ChatOpenAI(openai_api_key=API_KEY, temperature=0, model='gpt-4'), prompt=prompt)
     
     response = llm.predict(context = text, category = category_for_bill) # grab from tagging.py
     return response
 
 
-def generate_response(bill_number, text, category):
+def generate_response(bill_number: str, text:str, category:str) -> str:
     """Function to generate response"""
 
     API_KEY = st.session_state["OPENAI_API_KEY"]
@@ -187,7 +189,6 @@ def generate_response(bill_number, text, category):
     with get_openai_callback() as cb:
         response = rag_chain.invoke(query)
         st.write(cb.total_tokens, cb.prompt_tokens, cb.completion_tokens, cb.total_cost)
-        print("Total Tokens: ", cb.total_tokens, " Prompt Tokens: ", cb.prompt_tokens, "Completion Tokens" , cb.completion_tokens, "Total Cost", cb.total_cost)
     return response
 
 
