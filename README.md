@@ -18,6 +18,8 @@ This repository contains a pipeline from taking bills from Massachusetts legisla
 
   Both demo_app.py and demo_app_with_12bills.py generate bill category and tags (based on a given list) and summarize the bill text for 12 bills and all bills, respectively. We currently use vectorstore to split the MGL document into chunks for vectorstore storage and embeddings before injection into the prompt. However, we would like to test injecting the MGL sections directly into the prompt without using vectorstores as the operations through vectorstores are fuzzy (rely on similarity search). 
 
+  Currently using 'gpt-4' model for to generate categories (with the generate_category() function) and using 'gpt-4-1106-preview' to generate summaries of the bills (with the generate_response() function)
+
 
   Other files: helper files to be imported in the above two Python app files.
   
