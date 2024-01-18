@@ -39,7 +39,7 @@ def csv_to_df_cleaned(bills_csv_file_path: str, bill_title_col_name:str, bill_nu
         logging.error('Error: The file %s was not found', bills_csv_file_path)
         return None 
 
-def extract_sections(bill_text: str) -> list: 
+def extract_sections(bill_text: str) -> list[tuple[str, str]]: 
     """
     Extracts chapters and sections from a bill using regular expressions.
 
@@ -123,6 +123,8 @@ def apply_extract_sections(bills_df: pd.DataFrame, bill_text_col_name: str, chap
 
     Parameters:
     - bills_df (pd.DataFrame): The DataFrame containing bill information with a 'DocumentText' column.
+    - bills_text_col_name (str): The name of the column containing bill text
+    - chap_sec_list_col_name (str): The name of the new column containing lists of chapter and section pairs
 
     Returns:
     - bills_df (pd.DataFrame): The updated DataFrame with a new 'Reference List' column.
@@ -182,8 +184,6 @@ def query_section_text_all_bills(chapter_section_lists: list[tuple[str, str]]) -
     - The function skips empty or None pairs and ignores pairs with empty or NaN text data.
     - The formatted text data for each non-empty pair is stored in a list, which is then returned.
     """
-    # print(df.index)
-    # print("Chapter-Sections", chapter_section_lists)
     
 # Storing and printing each pair
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
