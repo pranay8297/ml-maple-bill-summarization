@@ -11,9 +11,6 @@ This repository contains a pipeline from taking bills from Massachusetts legisla
 * [EDA](https://github.com/vynpt/ml-maple-bill-summarization/tree/dev/EDA): the notebook ```eda.ipynb``` includes our work from scraping data that takes bills from MAPLE Swagger API, creating a dataframe to clean and process data, making visualizations to analyze data and explore characteristics of the dataset.
   
 * [demoapp](https://github.com/vynpt/ml-maple-bill-summarization/tree/dev/demoapp):   
-  ```app.py```: contains the codes of the LLM service we used and the wepapp we made using Streamlit. The webapp allows user to search for all bills.  
-  ```demo_app_with_12bills.py```: we test on top 12 bills from MAPLE website. We extract information from [Massachusetts General Law](https://malegislature.gov/Laws/GeneralLaws) to add context for the summaries of these bills. MGL sections text was scraped using extract_mgl_sections.py. Contains code to generate bill categories and tags
-
   ```demo_app.py```: contains the codes of the LLM - OpenAI service and webapp made using Streamlit. The webapp allows user to search for all bills. MGL sections text is extracted for all but ~1300 bills and is available for in 'Combined_MGL' column in all_bills_with_mgl.pq file (currently hosted on google drive due to it's large size).
 
   Both demo_app.py and demo_app_with_12bills.py generate bill category and tags (based on a given list) and summarize the bill text for 12 bills and all bills, respectively. We currently use vectorstore to split the MGL document into chunks for vectorstore storage and embeddings before injection into the prompt. However, we would like to test injecting the MGL sections directly into the prompt without using vectorstores as the operations through vectorstores are fuzzy (rely on similarity search). 
