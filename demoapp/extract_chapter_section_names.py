@@ -64,7 +64,12 @@ def get_chapter_section_names() -> tuple[pd.DataFrame, pd.DataFrame]:
     error_df = pd.DataFrame(error_section_urls)
     return names_df, error_df
 
-names_df, error_df = get_chapter_section_names()
 
-names_df.to_parquet("chapter_section_names.pq")
-error_df.to_csv("Error_URLs_Chapter_Section_Names.csv")
+def main():
+    names_df, error_df = get_chapter_section_names()
+
+    names_df.to_parquet("chapter_section_names.pq")
+    error_df.to_csv("Error_URLs_Chapter_Section_Names.csv")
+
+if __name__ == '__main__':
+    main()
