@@ -35,7 +35,6 @@ def get_committee_info(file_path, output_file_name_pq):
     
     for idx, bill_number in df["BillNumber"].items():
         progress = (idx + 1) / num_bills * 100
-        idx += 1
         print(f"\rPercent of Bills Completed: {progress:.2f}%", end='')
         try:
             #Bill API
