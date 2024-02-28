@@ -60,4 +60,11 @@ def get_committee_info(file_path, output_file_name_pq):
     committees_df.to_parquet(output_file_name_pq)
     return committees_df
 
-get_committee_info("demoapp/all_bills.csv", "committee_info.pq")
+
+def main():
+    all_bill_file_path = "demoapp/all_bills.csv"
+    output_file_path = "demoapp/committee_info.pq"
+    get_committee_info(all_bill_file_path, output_file_path)
+
+if __name__ == '__main__':
+    main()
