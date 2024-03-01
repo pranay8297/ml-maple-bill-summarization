@@ -106,6 +106,8 @@ fabric.properties
 # Icon must end with two \r
 Icon
 
+#ipynb checkpoints:
+.ipynb_checkpoints/
 
 # Thumbnails
 ._*
