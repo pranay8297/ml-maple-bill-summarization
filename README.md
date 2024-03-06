@@ -11,15 +11,21 @@ This repository contains a pipeline from taking bills from Massachusetts legisla
 * [EDA](https://github.com/vynpt/ml-maple-bill-summarization/tree/dev/EDA): the notebook ```eda.ipynb``` includes our work from scraping data that takes bills from MAPLE Swagger API, creating a dataframe to clean and process data, making visualizations to analyze data and explore characteristics of the dataset.
   
 * [demoapp](https://github.com/vynpt/ml-maple-bill-summarization/tree/dev/demoapp):   
-  ```app.py```: contains the codes of the LLM service we used and the wepapp we made using Streamlit. The webapp allows user to search for all bills.  
-  ```demo_app_with_12bills.py```: we test on top 12 bills from MAPLE website. We extract information from [Massachusetts General Law](https://malegislature.gov/Laws/GeneralLaws) to add context for the summaries of these bills. MGL sections text was scraped using extract_mgl_sections.py. Contains code to generate bill categories and tags
+```demo_app_function.py``` contains the code for generating summaries, category and bills for selected bills. For the documents (bill title + bill text + MGL sections text + MGL names + committee names) larger than 120K token size, we split the document into chunks and use vector embeddings before injection into the prompt. For documents smaller than 120K token size, all the documents are inserted directly into the prompt. The summary, category and tags are all generated using a single prompt.
 
-  ```demo_app.py```: contains the codes of the LLM - OpenAI service and webapp made using Streamlit. The webapp allows user to search for all bills. MGL sections text is extracted for all but ~1300 bills and is available for in 'Combined_MGL' column in all_bills_with_mgl.pq file (currently hosted on google drive due to it's large size).
+  ```run_demo_app_12bills.py```: we test on top 12 bills from MAPLE website. We extract information from [Massachusetts General Law](https://malegislature.gov/Laws/GeneralLaws) to add context for the summaries of these bills. MGL sections text was scraped using extract_mgl_sections.py. Contains code to generate bill categories and tags
 
-  Both demo_app.py and demo_app_with_12bills.py generate bill category and tags (based on a given list) and summarize the bill text for 12 bills and all bills, respectively. We currently use vectorstore to split the MGL document into chunks for vectorstore storage and embeddings before injection into the prompt. However, we would like to test injecting the MGL sections directly into the prompt without using vectorstores as the operations through vectorstores are fuzzy (rely on similarity search). 
+  ```run_demo_app.py```: contains the codes of the LLM - OpenAI service and webapp made using Streamlit. The webapp allows user to search for all bills. MGL sections text is extracted for all but ~1300 bills and is available for in 'Combined_MGL' column in all_bills_with_mgl.pq file (currently hosted on google drive due to it's large size).
 
-  Currently using 'gpt-4' model for to generate categories (with the generate_category() function) and using 'gpt-4-1106-preview' to generate summaries of the bills (with the generate_response() function)
+  We currently use vectorstore to split large documents into chunks for vectorstore storage and embeddings before injection into the prompt. However, note that operations through vectorstores are fuzzy (rely on similarity search). 
 
+  Currently using 'gpt-4-1106-preview' to generate summaries, categories and tags of the bills
+  
+  Files used in `demo_app_function.py`, `run_demo_app_12bills.py`, and `run_demo_app.py`:
+  `12_bills_with_more_sections.pq`: file containing information on 12 bills with MGL
+  `all_bills_with_mgl.pq`: file containing information on all bills with MGL (currently hosted on google drive)
+  `chapter_section_names.pq`: file containing MGL chapter and section names
+  `committee_info.pq`: file containing committee names and description
 
   Other files: helper files to be imported in the above two Python app files.
   
