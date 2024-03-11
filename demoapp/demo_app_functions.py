@@ -305,7 +305,7 @@ def generate_response_small_documents(bill_title: str, bill_text: str, mgl_ref: 
 
             Response Format:\n
             Summary: [SUMMARY]\n
-            Category:[CATEGORY]\n
+            Category: [CATEGORY]\n
             Tags: [TAGS]\n
 
             The bill title is: \"{title}"\
