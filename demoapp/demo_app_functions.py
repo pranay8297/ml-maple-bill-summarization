@@ -7,7 +7,6 @@ For token size < 120K, all the documents including, bill text, MGL, chapter and 
 import streamlit as st
 import pandas as pd
 import os
-import numpy as np
 from langchain.prompts import PromptTemplate
 from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI
@@ -19,9 +18,9 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
 import urllib.request
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 import tiktoken
-from sidebar import *
+from sidebar import sbar
 from tagging import *
 
 def set_page_config():
