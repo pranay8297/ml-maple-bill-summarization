@@ -9,9 +9,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from rouge_score import rouge_scorer
 from sentence_transformers import CrossEncoder
-from sidebar import *
 from tagging import *
-from demo_app import *
+from demo_app_functions import *
 
 MGL_NAMES_FILE_PATH = "demoapp/chapter_section_names.pq"
 COMMITTEE_FILE_PATH = "demoapp/committee_info.pq"
