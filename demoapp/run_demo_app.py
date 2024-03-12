@@ -1,6 +1,7 @@
 """
 Implements bill summarization, and category and tags generation for all bills (no MGL sections data is available for ~1300 bills)
-All the code implemented here is located in demoapp.py
+
+Most of the main logic is in `demo_app_functions.py.`
 This code runs very slow as it requires accessing data from a large file
 """
 
