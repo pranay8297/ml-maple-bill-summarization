@@ -8,11 +8,13 @@ Using Anaconda or create an environment to run streamlit
     ```conda create -n maple python=3.11.5```  
     ```conda activate maple```
 
-In the file "app.py" in "demoapp" folder:
+In the file "demo_app_for_12bills.py" in "demoapp" folder:
 * ```pip install streamlit```
 * Install all imported libraries: ```pip install pandas langchain openai chromadb tiktoken``` or you can refer to the requirement.txt
-* ```streamlit run demoapp/app2.py```  
-  (The "app2.py" is our work on the most popular 12 bills. It is our latest code with RAG, vectara.)
+* ```streamlit run demoapp/demo_app_with_12bills.py```  
+  (The "demoapp_with_12bill.py" is our work on the most popular 12 bills. It is our latest code for summarization, and category and tag generation with and without RAG, vectara.)
+
+demo_app.py contains code for implementing summarization, categrory and tag generation for all the bills with and without RAG
 
 # Additional Pointers (Source:Research Paper)
 In the demo app itself we have included evaluation metrics that help gauge the quality of the generated summaries in our use-case
