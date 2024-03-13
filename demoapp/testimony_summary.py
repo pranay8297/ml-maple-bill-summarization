@@ -1,3 +1,17 @@
+
+'''
+Please pass in open ai api key and bill number as inputs. As of now this program can only work with 3 bills (H3069, H3121, H711)
+
+python testimony_summary.py <<open ai secret key>> <<bill number>>
+
+
+Example command to run this program
+
+python testimony_summary.py sk-my_key H711
+
+'''
+
+
 import textwrap
 import pandas as pd
 import tiktoken
