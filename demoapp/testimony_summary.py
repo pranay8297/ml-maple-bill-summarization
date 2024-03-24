@@ -11,7 +11,6 @@ python testimony_summary.py sk-my_key H711
 
 '''
 
-
 import textwrap
 import pandas as pd
 import tiktoken
@@ -180,10 +179,16 @@ def get_testimony_summary(bill_id):
 
     prompt_template = """Write a concise summary of testimonies submitted by various residents of the state of Massachusetts for a particular bill:
 
+    The below text consists of summary of the bill followed by each testimony. 
+
     {text}
 
-    Please do not use any other information other than what is provided here. 
+    Here are some instructions to follow: 
+    1. Please do not use any other information other than what is provided here. 
+    2. Do not mention any names.
+    3. Do not provide information related to bill that will make the summary redundant. 
 
+    
     CONSCISE SUMMARY:"""
 
     prompt = PromptTemplate(template = prompt_template, input_variables = ['text'])
