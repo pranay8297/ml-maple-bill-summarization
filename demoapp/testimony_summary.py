@@ -131,30 +131,6 @@ def generate_categories(text: str) -> str:
     response = llm.predict(context = text, category = category_for_bill) # grab from tagging.py
     return response
 
-def cache(func):
-
-    '''
-    Cache is a decorator that is used for caching the data. Ideally before calling the LLM API, this function checks weather the 
-    data(In our case summary) that we want is in the cache or not, if in cache, it skips calling the LLM API and returns it from cache
-    else it calls the LLM, gets the data and updates the cache
-
-    Args: 
-        func: function object
-
-    Returns: 
-        func: function object 
-    '''
-
-    def w(arg):
-        if arg in SUMMARY_CACHE: return SUMMARY_CACHE[arg]
-        else: 
-            out = func(arg)
-            SUMMARY_CACHE[arg] = out
-            with open('generated_summary.json', 'w') as json_file: json.dump(SUMMARY_CACHE, json_file)
-            return out
-    return w
-
-# @cache
 def _generate_summary(bill_id: str, df: pd.DataFrame) -> str:
 
     '''
@@ -173,7 +149,6 @@ def _generate_summary(bill_id: str, df: pd.DataFrame) -> str:
 
         'Conscise summary of the bill.'
     '''
-    st()
     bill_c, bill_t, bill_id = find_bills(bill_id, df = df)
     category = generate_categories(bill_c)
     mgl_ref = str(df.loc[df['BillNumber']== bill_id, 'Combined_MGL'].values[0])
@@ -284,6 +259,7 @@ def get_formatted_summary_and_testimonies(bill_id: str, mgl_df: pd.DataFrame, te
     Examples: 
         >>> get_testimony_summary('H711', mgl_df, testimonies)
         'Here is the summary of the bill: this bill is so and so
+
          Here are all the testimonies that users have submitted : 
          testimony_1
 
@@ -294,7 +270,7 @@ def get_formatted_summary_and_testimonies(bill_id: str, mgl_df: pd.DataFrame, te
 
     formatted_testimonies = get_testimonies(bill_id, testimonies)
     summary = get_summary(bill_id, mgl_df)
-    return f'Here is the summary of the bill: {summary} \n Here are all the testimonies that users have submitted : {formatted_testimonies}'
+    return f'Here is the summary of the bill: ```{summary}``` \n\n\n Here are all the testimonies that users have submitted : {formatted_testimonies}'
 
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
     '''
