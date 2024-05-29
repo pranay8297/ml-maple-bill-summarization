@@ -23,6 +23,8 @@ import tiktoken
 from sidebar import sbar
 from tagging import *
 
+GPT_MDOEL_VERSION = 'gpt-4o'
+
 def set_page_config():
     """
     Configures the Streamlit page with a custom title and layout, and displays a custom title for the app.
@@ -212,7 +214,7 @@ def count_tokens(bill_title:str, bill_text:str, mgl_ref:str, mgl_names:str, comm
         int: token_count
     """
     
-    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    encoding = tiktoken.encoding_for_model(GPT_MDOEL_VERSION)
 
     text = str(bill_title) + str(bill_text) + str(mgl_ref) + str(mgl_names) + str(committee_info)
     token_count = len(encoding.encode(text))
@@ -347,11 +349,11 @@ def generate_response(df: pd.DataFrame, bill_number: str, bill_title: str, bill_
     """
     API_KEY = st.session_state["OPENAI_API_KEY"]
     os.environ['OPENAI_API_KEY'] = API_KEY
-    llm = ChatOpenAI(openai_api_key=API_KEY, temperature=0, model='gpt-4-1106-preview', model_kwargs={'seed': 42})  
+    llm = ChatOpenAI(openai_api_key=API_KEY, temperature=0, model=GPT_MDOEL_VERSION, model_kwargs={'seed': 42})  
     committee_info = get_committee_info(committee_file_name, bill_number)
     mgl_names = get_chap_sec_names(df, bill_number, mgl_names_file_name)
     num_tokens = count_tokens(bill_title, bill_text, mgl_ref, mgl_names, committee_info)
-    #Context size for 'gpt-4-1106-preview' is 128K; Need to break up the documents and use vector embenddings when the word length of the documents is large
+    #Context size for 'gpt-4o' is 128K; Need to break up the documents and use vector embenddings when the word length of the documents is large
     #Chose 90K cut off for large docs because: 1 token = 0.75 words --> 90000 words = ~120K words + leaving  room for response
     
     if bill_text is None or str(bill_text).strip().lower() =="nan" or bill_text == "":
