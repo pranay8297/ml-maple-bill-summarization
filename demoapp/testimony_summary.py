@@ -80,7 +80,7 @@ bills_to_select = {
     '#S257': 'An Act to end discriminatory outcomes in vocational school admissions'
 }
 
-def find_bills(bill_number, df):
+def find_bills(bill_number: str, df: pd.DataFrame):
     """input:
     args: bill_number: (str), Use the number of the bill to find its title and content
     """
