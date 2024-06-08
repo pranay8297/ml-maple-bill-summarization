@@ -395,7 +395,6 @@ if __name__ == '__main__':
 
     open_ai_key, bill_id = sys.argv[1:]
     os.environ['OPENAI_API_KEY'] = open_ai_key 
-    MODEL_NAME = 'gpt-4-1106-preview'
     MAX_TOKENS = 4097
     main(bill_id)
 
