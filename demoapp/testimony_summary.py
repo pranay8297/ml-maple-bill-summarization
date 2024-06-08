@@ -65,6 +65,13 @@ try:
 except Exception as e: SUMMARY_CACHE = {}
 
 
+# Input file containing bill and section text
+INPUT_BILLS_AND_SECTIONS = "./12_bills_with_mgl_more_sections.csv"
+MODEL_NAME = 'gpt-4-1106-preview
+MAX_TOKENS = 4097
+# This file consists of all the testimonies of each bill. 
+INPUT_TESTIMONYi = pd.read_csv('./maple_testimonies.csv')
+
 bills_to_select = {
     '#H3121': 'An Act relative to the open meeting law',
     '#S2064': 'An Act extending the public records law to the Governor and the Legislature',
