@@ -379,7 +379,7 @@ def main(bill_id: str) -> str:
     '''
 
     # This CSV file consists of Bills and pertinant sections of Mass General Law
-    mgl_df = pd.read_csv("./12_bills_with_mgl_more_sections.csv")
+    mgl_df = pd.read_csv(INPUT_BILLS_AND_SECTIONS)
 
     # This file consists of all the testimonies of each bill. 
     testimonies = pd.read_csv('./maple_testimonies.csv')
