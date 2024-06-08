@@ -389,7 +389,7 @@ def main(bill_id: str) -> str:
     mgl_df = pd.read_csv(INPUT_BILLS_AND_SECTIONS)
 
     # This file consists of all the testimonies of each bill. 
-    testimonies = pd.read_csv('./maple_testimonies.csv')
+    testimonies = pd.read_csv(INPUT_TESTIMONY)
 
     summary = get_testimony_summary(bill_id, mgl_df, testimonies)
     print(summary)
