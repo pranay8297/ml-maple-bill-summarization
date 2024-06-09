@@ -180,9 +180,7 @@ def get_chap_sec_names(df: pd.DataFrame, bill_number: str, mgl_names_file_path: 
     The function assumes the DataFrame has the necessary columns.
     """
     names_df = pd.read_parquet(mgl_names_file_path)
-    chap_sec_lists = df[df['BillNumber'] == bill_number]['List References']    
-
-    return chap_sec_lists
+    chap_sec_lists = df[df['BillNumber'] == bill_number]['Chapter-Section List']  
 
     names = []
 
@@ -376,8 +374,7 @@ def generate_response(df: pd.DataFrame, bill_number: str, bill_title: str, bill_
     if bill_text is None or str(bill_text).strip().lower() =="nan" or bill_text == "":
         response = f"Bill {bill_number} is not available for summarization"
         query = ""
-
-    if (num_tokens) < 120000:
+    elif (num_tokens) < 120000:
         query, response = generate_response_small_documents(bill_title, bill_text, mgl_ref, mgl_names, committee_info, llm)
     else:
         query, response = generate_response_large_documents(bill_title, bill_text, mgl_ref, mgl_names, committee_info, llm)
