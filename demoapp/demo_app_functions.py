@@ -519,7 +519,7 @@ def set_openai_api_key():
     In other cases please uncomment the below line and replace API_KEY with your token
     '''
     pass
-    # os.environ['OPENAI_API_KEY'] = API_KEY
+    # os.environ['OPENAI_API_KEY'] =  API_KEY
 
 def set_my_llm_cache(cache_file: Path=LLM_CACHE) -> SQLiteCache:
     """
