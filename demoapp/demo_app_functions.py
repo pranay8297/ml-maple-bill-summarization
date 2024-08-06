@@ -41,7 +41,7 @@ from sentence_transformers import CrossEncoder
 from typing import Tuple, List
 from tagging import *
 
-GPT_MDOEL_VERSION = 'gpt-4o'
+GPT_MDOEL_VERSION = 'gpt-4o-mini'
 MAX_TOKEN_LIMIT = 30000
 
 CHROMA_DB_PATH = "./databases/chroma_db"
@@ -519,7 +519,7 @@ def set_openai_api_key():
     In other cases please uncomment the below line and replace API_KEY with your token
     '''
     pass
-    # os.environ['OPENAI_API_KEY'] =  API_KEY
+    # os.environ['OPENAI_API_KEY'] = API_KEY
 
 def set_my_llm_cache(cache_file: Path=LLM_CACHE) -> SQLiteCache:
     """
@@ -714,8 +714,12 @@ def get_query_for_summarization(bill_details: BillDetails, llm_call_type: str) -
 
                     INSTRUCTIONS: 
 
-                    Only provide Summary, no other details are required. \n
-                    Do not provide tags or other extraneous text besides the summary. \n    
+                    1. Only provide Summary, no other details are required. \n
+                    2. Do not provide tags or other extraneous text besides the summary. \n    
+                    3. Do not cite the title of the bill - the reader will already know that \n
+                    4. Do not cite specific section numbers of the MGL - the reader will not know what those sections are. \n
+                    5. Do not reference that this is a MA bill - the reader will already know that. \n
+                    6. If referencing dates or other provisions of the bill, say that "this would happen if the bill is passed" rather than "this will happen". \n
 
                     RESPONSE FORMAT:\n\n                Summary: [SUMMARY]
 
@@ -743,8 +747,13 @@ def get_query_for_summarization(bill_details: BillDetails, llm_call_type: str) -
 
                 INSTRUCTIONS: 
 
-                Only provide Summary, no other details are required. \n
-                Do not provide tags or other extraneous text besides the summary. \n    
+                1. Only provide Summary, no other details are required. \n
+                2. Do not provide tags or other extraneous text besides the summary. \n    
+                3. Do not cite the title of the bill - the reader will already know that \n
+                4. Do not cite specific section numbers of the MGL - the reader will not know what those sections are. \n
+                5. Do not reference that this is a MA bill - the reader will already know that. \n
+                6. If referencing dates or other provisions of the bill, say that "this would happen if the bill is passed" rather than "this will happen". \n
+   
 
                 RESPONSE FORMAT:\n\n                Summary: [SUMMARY]
 
