@@ -39,6 +39,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import CrossEncoder
 from typing import Tuple, List
+
+from extract_mgl_sections import extract_sections, query_section_text_all_bills
 from tagging import *
 
 GPT_MDOEL_VERSION = 'gpt-4o-mini'
@@ -519,7 +521,7 @@ def set_openai_api_key():
     In other cases please uncomment the below line and replace API_KEY with your token
     '''
     pass
-
+    # os.environ['OPENAI_API_KEY'] = API_KEY
 
 def set_my_llm_cache(cache_file: Path=LLM_CACHE) -> SQLiteCache:
     """
@@ -550,6 +552,97 @@ class LLMResults:
 
     def __init__(self, query: str, response: str):
         self.query, self.response = query, response
+
+def extract_bill_context(bill_text) -> str: 
+
+
+
+    sections = extract_sections(bill_text)
+    mgl_list, empty_responses = query_section_text_all_bills(sections)
+
+    combined_mgl = ' '.join(mgl_list) if len(mgl_list) != 0 else "None"
+    mgl_names = get_chap_sec_names_internal(sections)
+    return combined_mgl, mgl_names
+
+def get_summary_api_function(bill_id: str, bill_title: str, bill_text: str) -> dict:
+
+    '''
+    This function takes in bill id, bill title and bill text as inputs and extracts relevant mgl section text and passes all this information
+    to an LLM to generate summary of a bill  
+
+    Arguments: 
+    
+    bill_id (str): ID of the bill
+    bill_title (str): Bill title
+    bill_text (str): Contents of the bill
+
+    Returns: 
+        A dict of status_code and an response 
+        status_code can take these following values {1: Success, -1: Necessary details not found}
+
+    '''
+
+    # extract relevant mgl text
+    combined_mgl, mgl_names = extract_bill_context(bill_text)
+    
+    # create bill_details object
+    bill_details = BillDetails(
+        bill_id = bill_id,
+        bill_title = bill_title, 
+        bill_text = bill_text, 
+        mgl_ref = combined_mgl, 
+        committee_info = 'None:None', 
+        mgl_names = mgl_names, 
+    )
+
+    # call the summary function
+    status_code, results = get_summary(bill_details)
+
+    # return response attribute of returned value
+    if status_code != 1: 
+        return {'status': status_code, 'summary': ''}
+    else: 
+        return {'status': status_code, 'summary': results.response}
+
+def get_tags_api_function(bill_id: str, bill_title: str, bill_text: str) -> dict:
+
+    '''
+    This function takes in bill id, bill title and bill text as inputs and extracts relevant mgl section text and passes all this information
+    to an LLM to generate tags for a bill  
+
+    Arguments: 
+    
+    bill_id (str): ID of the bill
+    bill_title (str): Bill title
+    bill_text (str): Contents of the bill
+
+    Returns: 
+        A dict of status_code and an response
+        status_code can take these following values {1: Success, -1: Necessary details not found}
+
+    '''
+
+    # extract relevant mgl text
+    combined_mgl, mgl_names = extract_bill_context(bill_text)
+    
+    # create bill_details object
+    bill_details = BillDetails(
+        bill_id = bill_id,
+        bill_title = bill_title, 
+        bill_text = bill_text, 
+        mgl_ref = combined_mgl, 
+        committee_info = 'None:None', 
+        mgl_names = mgl_names, 
+    )
+
+    # call the summary function
+    status_code, results = get_tags(bill_details)
+
+    # return response attribute of returned value
+    if status_code != 1: 
+        return {'status': status_code, 'tags': []}
+    else: 
+        return {'status': status_code, 'tags': results.response}
 
 def get_llm_call_type(bill_details: BillDetails) -> str:
 
@@ -596,7 +689,7 @@ def get_category_tags(categories: List) -> List:
     for cts in tags_tuple: category_tags += cts
     return category_tags
 
-def get_summary(bill_details: BillDetails):
+def get_summary(bill_details: BillDetails) -> tuple[int, LLMResults]:
     '''
     This function takes in bill details object (bill title, bill text and reference mgl section text) and summarizes the bill. 
 
@@ -619,7 +712,7 @@ def get_summary(bill_details: BillDetails):
     query = get_query_for_summarization(bill_details, llm_call_type)
     return 1, call_llm(bill_details, query, llm_call_type)
 
-def get_tags(bill_details: BillDetails):
+def get_tags(bill_details: BillDetails) -> tuple[int, LLMResults]:
     '''
     This function takes in bill details object (bill title, bill text and reference mgl section text) and tags the bill. 
 
@@ -645,11 +738,9 @@ def get_tags(bill_details: BillDetails):
     category_tags = get_category_tags(categories)
     query_2 = get_query_for_tagging(bill_details, category_tags, llm_call_type)
     tag_response = call_llm(bill_details, query_2, llm_call_type)
-    tag_response.response = extract_categories_tags(tag_response.response)
-    
-    try: 
-        assert set(tag_response.response) - set(category_tags) == set()
-    except: print(f'Assertion Error: {set(tag_response.response) - set(category_tags)}, \nbill_id: {bill_details.bill_id}')
+
+    # parses the response from LLM and removes hallucinated tags
+    tag_response.response = list(set(extract_categories_tags(tag_response.response)) & set(category_tags))
 
     return 1, tag_response
 
