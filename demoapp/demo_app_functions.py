@@ -748,7 +748,6 @@ def extract_categories_tags(response: str):
     return [i.strip() for i in response]
 
 def prepare_invoke_dict(bill_details: BillDetails) -> dict:
-
     """
     This function prepares the dict object that is used in chain.invoke function to call the LLM with prompt and 
     required details. 
