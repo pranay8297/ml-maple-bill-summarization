@@ -216,7 +216,9 @@ def get_chap_sec_names(df: pd.DataFrame, bill_number: str, mgl_names_file_path: 
 
 def get_chap_sec_names_internal(chap_sec_lists: list, mgl_names_file_path: str = "./chapter_section_names.pq") -> str:
     """
-    Fetches chapter and section names for a given bill number from a DataFrame.
+    Fetches chapter and section names for a given bill number from a local parquet file.
+    
+    TODO delete this function after we setup a robust database backend with the MGL data.
     
     Args:
         chap_sec_lists (list): list of tuples containing chapter number and section numbers.
