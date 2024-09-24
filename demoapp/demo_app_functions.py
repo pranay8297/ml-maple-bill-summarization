@@ -1088,7 +1088,6 @@ def get_or_create_embeddings(bill_details: BillDetails, emb_api: OpenAIEmbedding
     return client
 
 def large_docs(bill_details: BillDetails, query: str, llm: ChatOpenAI) -> str:
-
     """
         
     This function calls the LLM using RAG - Generally used if token count is greater than 128k
