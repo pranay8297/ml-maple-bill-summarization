@@ -54,6 +54,8 @@ MAX_TOKEN_LIMIT = 128000
 CHROMA_DB_PATH = "./databases/chroma_db"
 LLM_CACHE = Path("./databases/llm_cache.db")
 
+API_KEY = '' # Optional: Add API Key here if you want to use legacy functions
+
 
 def set_page_config():
     """
@@ -517,8 +519,6 @@ def update_csv(bill_num: str, title: str, summarized_bill: str, category: str, t
     
     df.to_csv(csv_file_path, index=False)
     return df
-
-
 
 def set_my_llm_cache(cache_file: Path=LLM_CACHE) -> SQLiteCache:
     """
