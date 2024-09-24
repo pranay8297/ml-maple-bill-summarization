@@ -848,7 +848,6 @@ def get_query_for_summarization(bill_details: BillDetails, llm_call_type: str) -
     return query
 
 def get_query_for_categorizing(bill_details: BillDetails, llm_call_type: str) -> str: 
-
     """
         
     This functions prepares a prompt based on the call type (small: No use of RAG, large: Use RAG) for bill categoruzation
