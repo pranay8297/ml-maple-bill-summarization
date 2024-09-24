@@ -1007,7 +1007,6 @@ def get_query_for_tagging(bill_details: BillDetails, category_tags: list, llm_ca
     return query
 
 def call_llm(bill_details: BillDetails, query: str, llm_call_type: str = 'small') -> LLMResults: 
-
     """
         
     This is a generic function that calls the LLM with given query
