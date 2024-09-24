@@ -248,14 +248,14 @@ tags_for_bill = """
 }
 """
 
-new_categories_for_bill_list = ['Commerce', 'Crime and Law Enforcement', 'Economics and Public Finance', 
+category_for_bill_v2 = ['Commerce', 'Crime and Law Enforcement', 'Economics and Public Finance', 
         'Education', 'Emergency Management', 'Energy', 'Environmental Protection', 'Families', 
         'Government Operations and Politics', 'Healthcare', 'Food, Drugs and Alcohol', 
         'Housing and Community Development', 'Immigration', 'Labor and Employment', 'Law and Judiciary', 
         'Public and Natural Resources', 'Science, Technology, Communications', 'Social Services', 
         'Sports and Recreation', 'Taxation', 'Transportation and Public Works']
 
-new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regulation',
+tags_for_bill_v2 = {'Commerce': ['Banking and financial institutions regulation',
   'Business ethics',
   'Competition and antitrust',
   'Consumer affairs',
@@ -263,6 +263,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Marketing and advertising',
   'Retail and wholesale trades',
   'Securities'],
+
  'Crime and Law Enforcement': ['Assault and harassment offenses',
   'Crimes against animals and natural resources',
   'Crimes against children',
@@ -274,6 +275,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Fraud offenses and financial crimes',
   'Correctional Facilities',
   'Criminal Justice Reform'],
+
  'Economics and Public Finance': ['Budget process',
   'Debt collection',
   'Economic development',
@@ -286,6 +288,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Labor-management relations',
   'Public contracts and procurement',
   'Pension and retirement benefits'],
+
  'Education': ['Academic performance and assessments',
   'Adult education and literacy',
   'Educational facilities and institutions',
@@ -297,6 +300,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Teachers and educators',
   'Technology assessment',
   'Vocational and technical education'],
+
  'Emergency Management': ['Accidents',
   'Disaster relief and insurance',
   'Emergency communications systems',
@@ -304,6 +308,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Emergency planning and evacuation',
   'Hazards and emergency operations',
   'Search and rescue operations'],
+
  'Energy': ['Energy assistance',
   'Energy efficiency and conservation',
   'Energy prices',
@@ -311,6 +316,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Energy revenues and royalties',
   'Energy storage, supplies, demand',
   'Renewable energy sources'],
+
  'Environmental Protection': ['Air quality',
   'Environmental assessment, monitoring, research',
   'Environmental education',
@@ -322,11 +328,13 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Solid waste and recycling',
   'Water quality',
   'Wetlands'],
+
  'Families': ['Adoption and foster care',
   'Family planning and birth control',
   'Family relationships and status',
   'Family services',
   'Parenting'],
+
  'Government Operations and Politics': ['Census and government statistics',
   'Election administration',
   'Government ethics and transparency',
@@ -338,6 +346,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Political advertising',
   'Political representation',
   'public-private cooperation'],
+
  'Healthcare': ['Alternative treatments',
   'Telehealth',
   'Public Health',
@@ -355,6 +364,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Prescription drugs',
   'Healthcare oversight',
   'Sex and reproductive health'],
+
  'Food, Drugs and Alcohol': ['Alcoholic beverages',
   'Drug, alcohol, tobacco use',
   'Food industry and services',
@@ -363,6 +373,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Food service employment',
   'Drug safety, medical device, and laboratory regulation',
   'Nutrition and diet'],
+
  'Housing and Community Development': ['Community life and organization',
   'Cooperative and condominium housing',
   'Homelessness and emergency shelter',
@@ -374,12 +385,14 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Landlord and tenant',
   'Low- and moderate-income housing',
   'Residential rehabilitation and home repair'],
+
  'Immigration': ['Citizenship and naturalization',
   'Immigrant health and welfare',
   'Immigration status and procedures',
   'Language services',
   'Refugees, asylum, displaced persons',
   'Right to shelter'],
+
  'Labor and Employment': ['Employee benefits and pensions',
   'Employee hiring',
   'Employee leave',
@@ -393,6 +406,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   "Workers' compensation",
   'Worker safety and health',
   'Youth employment and child labor'],
+
  'Law and Judiciary': ['Administrative law and regulatory procedures',
   'Administrative remedies',
   'Civil actions and liability',
@@ -403,6 +417,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Jurisdiction and venue',
   'Legal fees and court costs',
   'Property rights'],
+
  'Public and Natural Resources': ['Forests, forestry, trees',
   'General public lands matters',
   'Marine and coastal resources, fisheries',
@@ -410,6 +425,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Monuments and memorials',
   'Water resources',
   'Wilderness'],
+
  'Science, Technology, Communications': ['Advanced technology and technological innovations',
   'Atmospheric science and weather',
   'Computer security and identity theft',
@@ -424,6 +440,7 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Telecommunication rates and fees',
   'Telephone and wireless communication',
   'Television and film'],
+
  'Social Services': ['Child care and development',
   'Domestic violence and child abuse',
   'Food assistance and relief',
@@ -464,3 +481,236 @@ new_tags_for_bill_dict = {'Commerce': ['Banking and financial institutions regul
   'Water storage',
   'Water use and supply']}
 
+new_categories_for_bill_list = ['Commerce', 'Crime and Law Enforcement', 'Economics and Public Finance', 'Education', 
+    'Emergency Management', 'Energy', 'Environmental Protection', 'Families', 'Government Operations and Politics', 
+    'Healthcare', 'Food, Drugs and Alcohol', 'Housing and Community Development', 'Immigrants and Foreign Nationals', 
+    'Labor and Employment', 'Law and Judiciary', 'Public and Natural Resources', 'Science, Technology, Communications', 
+    'Social Services', 'Sports and Recreation', 'Taxation', 'Transportation and Public Works']
+
+new_tags_for_bill_dict = {
+    "Commerce": [
+    "Banking and financial institutions regulation",
+    "Partnerships and Limited Liability Companies",
+    "Non-Profit Law and Governance",
+    "Consumer Protection",
+    "Corporation Law and Governance",
+    "Marketing and advertising",
+    "Retail and wholesale trades",
+    "Securities"
+    ],
+    "Crime and Law Enforcement": [
+    "Assault and harassment offenses",
+    "Crimes against animals and natural resources",
+    "Crimes against children",
+    "Property Crimes",
+    "Criminal investigation, prosecution, interrogation",
+    "Criminal justice information and records",
+    "Criminal Sentencing",
+    "Firearms and explosives",
+    "Fraud offenses and financial crimes",
+    "Correctional Facilities",
+    "Criminal Justice Reform"
+    ],
+    "Economics and Public Finance": [
+    "Budget process",
+    "Debt collection",
+    "Financial literacy",
+    "Financial services and investments",
+    "Labor-management relations",
+    "Public contracts and procurement",
+    "Pension and retirement benefits"
+    ],
+    "Education": [
+    "Academic performance and assessments",
+    "Adult education and literacy",
+    "Educational facilities and institutions",
+    "Elementary and secondary education",
+    "Higher education",
+    "Curriculum and standards",
+    "Special education",
+    "Student aid and college costs",
+    "Teachers and educators",
+    "Technology assessment",
+    "Vocational and technical education"
+    ],
+    "Emergency Management": [
+    "Disaster relief and insurance",
+    "Emergency communications systems",
+    "Emergency medical services and trauma care",
+    "Emergency planning and evacuation",
+    "Hazards and emergency operations"
+    ],
+    "Energy": [
+    "Energy assistance",
+    "Energy efficiency and conservation",
+    "Energy prices",
+    "Energy research",
+    "Energy storage, supplies, demand",
+    "Renewable energy sources"
+    ],
+    "Environmental Protection": [
+    "Air quality",
+    "Environmental assessment, monitoring, research",
+    "Environmental education",
+    "Environmental health",
+    "Environmental regulatory procedures",
+    "Hazardous wastes and toxic substances",
+    "Pollution control and abatement",
+    "Soil pollution",
+    "Solid waste and recycling",
+    "Water quality",
+    "Wetlands"
+    ],
+    "Families": [
+    "Adoption and foster care",
+    "Family planning and birth control",
+    "Family relationships and status",
+    "Family services",
+    "Parenting"
+    ],
+    "Government Operations and Politics": [
+    "Census and government statistics",
+    "Election administration",
+    "Municipality Oversight ",
+    "Government information and archives",
+    "Government studies and investigations",
+    "Government trust funds",
+    "Lobbying and campaign finance",
+    "Political advertising",
+    "Public-private cooperation"
+    ],
+    "Healthcare": [
+    "Alternative treatments",
+    "Telehealth",
+    "Veterinary Services and Pets",
+    "Dental care",
+    "Health care costs",
+    "Health insurance and coverage",
+    "Health facilities and institutions",
+    "Health information and medical records",
+    "Health technology, devices, supplies",
+    "Substance use disorder",
+    "Healthcare workforce",
+    "Medical research",
+    "Mental health",
+    "Prescription drugs",
+    "Sex and reproductive health"
+    ],
+    "Food, Drugs and Alcohol": [
+    "Alcoholic beverages and licenses",
+    "Drug, alcohol, tobacco use",
+    "Food industry and services",
+    "Food supply, safety, and labeling",
+    "Nutrition and diet",
+    "Food service employment",
+    "Drug safety, medical device, and laboratory regulation"
+    ],
+    "Housing and Community Development": [
+    "Community life and organization",
+    "Cooperative and condominium housing",
+    "Homelessness and emergency shelter",
+    "Housing discrimination",
+    "Housing finance and home ownership",
+    "Housing for the elderly and disabled",
+    "Housing industry and standards",
+    "Housing supply and affordability",
+    "Landlord and tenant",
+    "Low- and moderate-income housing",
+    "Residential rehabilitation and home repair"
+    ],
+    "Immigrants and Foreign Nationals": [
+    "Immigrant health and welfare",
+    "Translation and language services",
+    "Refugees, asylum, displaced persons",
+    "Right to shelter"
+    ],
+    "Labor and Employment": [
+    "Employee benefits",
+    "Employee pensions",
+    "Employee leave",
+    "Employee performance",
+    "Employment and training programs",
+    "Employment discrimination",
+    "Migrant, seasonal, agricultural labor",
+    "Self-employment",
+    "Temporary and part-time employment",
+    "Workers' compensation",
+    "Worker safety and health",
+    "Youth employment and child labor"
+    ],
+    "Law and Judiciary": [
+    "Administrative remedies",
+    "Civil actions and liability",
+    "Civil disturbances",
+    "Evidence and witnesses",
+    "Judicial administration",
+    "Judicial review and appeals",
+    "Jurisdiction and venue",
+    "Legal fees and court costs",
+    "Property rights"
+    ],
+    "Public and Natural Resources": [
+    "Forests, forestry, trees",
+    "Eminent domain",
+    "Marine and coastal resources, fisheries",
+    "Marine pollution",
+    "Monuments and memorials",
+    "Water resources",
+    "Wilderness"
+    ],
+    "Science, Technology, Communications": [
+    "Advanced technology and technological innovations",
+    "Atmospheric science and weather",
+    "Computer security and identity theft",
+    "Computers and information technology",
+    "Genetics",
+    "Internet, web applications, social media",
+    "Photography and imaging",
+    "Telecommunication rates and fees",
+    "Telephone and wireless communication"
+    ],
+    "Social Services": [
+    "Child care and development",
+    "Domestic violence and child abuse",
+    "Food assistance and relief",
+    "Home and outpatient care",
+    "Social work, volunteer service, charitable organizations",
+    "Unemployment",
+    "Urban and suburban affairs and development",
+    "Veterans' education, employment, rehabilitation",
+    "Veterans' loans, housing, homeless programs",
+    "Veterans' medical care"
+    ],
+    "Sports and Recreation": [
+    "Art and culture",
+    "Hunting and fishing",
+    "Outdoor recreation",
+    "Public parks",
+    "Gambling and lottery",
+    "Professional sports, stadiums and arenas",
+    "Sports and recreation facilities"
+    ],
+    "Taxation": [
+    "Capital gains tax",
+    "Corporate tax",
+    "Estate tax",
+    "Excise tax",
+    "Gift tax",
+    "Income tax",
+    "Payroll and employment tax",
+    "Property tax",
+    "Sales tax",
+    "Transfer and inheritance taxes",
+    "Tax-exempt organizations"
+    ],
+    "Transportation and Public Works": [
+    "Aviation and airports",
+    "Highways and roads",
+    "Maritime affairs and fisheries",
+    "MBTA & Public Transportation",
+    "Public utilities and utility rates",
+    "Railroads",
+    "Water storage",
+    "Water use and supply"
+    ]
+}

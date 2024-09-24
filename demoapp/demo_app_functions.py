@@ -1,8 +1,11 @@
 """
-This code implements text summarization, category selection and tagging bills using a single prompt
-MGL sections in 'all_bills_with_mgl.pq' files were generated using extract_mgl_section.py 
-For token size > 120K,  the code impelemtns OpenAIEmbeddings and Vectorstore to split the MGL text into chunks of len = 90K for vector embeddings
-For token size < 120K, all the documents including, bill text, MGL, chapter and section names and bill title are passed into a single prompt. 
+This code implements text summarization, category selection and tagging bills using a single prompt.
+
+The main functions and their objectives are: 
+1. get_summary_api_function: Function used to summarize a bill - It takes in bill id, bill title and bill text 
+                             and returns summary of the bill.
+2. get_tags_api_function:    Function used to tag a bill with pre specified tags - It takes in bill id, bill title
+                             and bill text and returns the selected tags from specified tags.
 
 """
 
@@ -15,6 +18,7 @@ import urllib.request
 import chromadb
 
 from chromadb.config import Settings
+from dataclasses import dataclass, field
 
 from langchain.globals import set_llm_cache
 from langchain.prompts import PromptTemplate
@@ -41,6 +45,7 @@ from sentence_transformers import CrossEncoder
 from typing import Tuple, List
 
 from extract_mgl_sections import extract_sections, query_section_text_all_bills
+from prompts import *
 from tagging import *
 
 GPT_MDOEL_VERSION = 'gpt-4o-mini'
@@ -49,7 +54,6 @@ MAX_TOKEN_LIMIT = 128000
 CHROMA_DB_PATH = "./databases/chroma_db"
 LLM_CACHE = Path("./databases/llm_cache.db")
 
-API_KEY = "" #Please Enter your API key here
 
 def set_page_config():
     """
@@ -215,21 +219,21 @@ def get_chap_sec_names(df: pd.DataFrame, bill_number: str, mgl_names_file_path: 
         return mgl_names
 
 def get_chap_sec_names_internal(chap_sec_lists: list, mgl_names_file_path: str = "./chapter_section_names.pq") -> str:
-    """
-    Fetches chapter and section names for a given bill number from a local parquet file.
     
+    """
+    Fetches chapter and section names for a given bill number from a local parquet file.    
     TODO delete this function after we setup a robust database backend with the MGL data.
     
     Args:
         chap_sec_lists (list): list of tuples containing chapter number and section numbers.
-        mgl_names_file_path (str): path for the file containing chapter and section names
+        mgl_names_file_path (str): path for the file containing chapter and section names. Expected columns are `Chapter_Number`, `Section_Number`, `Chapter`, `Section Name`
     
     Returns:
         str: All chapter and section names pairs concatenated together.
         
     The function assumes the DataFrame has the necessary columns.
-
     """
+
     names_df = pd.read_parquet(mgl_names_file_path)
     names = {}
 
@@ -459,13 +463,12 @@ def parse_response(response:str) -> Tuple[str, str, str]:
     Note:
     - The function assumes that the input string strictly follows the expected format. 
       Variations in the format may lead to incorrect parsing or extraction of information.
-      """
+    """
     
     if not response:
         raise ValueError("The response is empty.")
     if response:
             # Extracting summary
-            print(response)
             summary_start = response.find("[SUMMARY]") + 1
             summary_end = response.find("\nCategory:")
             summary = response[summary_start:summary_end].strip()
@@ -515,15 +518,7 @@ def update_csv(bill_num: str, title: str, summarized_bill: str, category: str, t
     df.to_csv(csv_file_path, index=False)
     return df
 
-def set_openai_api_key():
-    '''
-    Function to add Open AI API Key to environment variable. 
 
-    This function assumes that API Key is already set.
-    In other cases please uncomment the below line and replace API_KEY with your token
-    '''
-    pass
-    # os.environ['OPENAI_API_KEY'] = API_KEY
 
 def set_my_llm_cache(cache_file: Path=LLM_CACHE) -> SQLiteCache:
     """
@@ -532,58 +527,82 @@ def set_my_llm_cache(cache_file: Path=LLM_CACHE) -> SQLiteCache:
     """
     set_llm_cache(SQLiteCache(database_path = cache_file))
 
-class BillDetails:
+@dataclass()
+class BillDetails():
 
     '''
     A class to store all the details pertaining to a bill. 
     '''
 
-    def __init__(self, bill_id: str, bill_title: str, bill_text: str, mgl_ref: str, committee_info: str, mgl_names: str):
-        self.bill_id = bill_id
-        self.bill_title = bill_title
-        self.bill_text = bill_text
-        self.mgl_ref = mgl_ref
-        self.committee_info = committee_info
-        self.mgl_names = mgl_names
+    bill_id: str = ''
+    bill_title: str = ''
+    bill_text: str = ''
+    mgl_ref: str = ''
+    committee_info: str = ''
+    mgl_names: str = ''
+    invoke_dict: dict = field(default_factory=list)
 
+@dataclass()
 class LLMResults: 
 
     '''
     A class to store the results of the LLM.
     '''
+    query: str = ''
+    response: str = ''
 
-    def __init__(self, query: str, response: str):
-        self.query, self.response = query, response
+def extract_bill_context(bill_text: str) -> tuple: 
 
-def extract_bill_context(bill_text) -> str: 
+    '''
+    This function takes in bill text, extracts the referenced MGL sections and returns them
 
+    Arguments: 
+        bill_text (str): Actual bill text
 
-
+    Returns:
+        A tuple of (combined_mgl, mgl_names)
+        combined_mgl (str): All the relevant MGL section strings concatenated to a big string
+        mgl_names (tuple): Tuple of referenced MGL section numbers
+    '''
     sections = extract_sections(bill_text)
     mgl_list, empty_responses = query_section_text_all_bills(sections)
 
     combined_mgl = ' '.join(mgl_list) if len(mgl_list) != 0 else "None"
     mgl_names = get_chap_sec_names_internal(sections)
+
     return combined_mgl, mgl_names
 
 def get_summary_api_function(bill_id: str, bill_title: str, bill_text: str) -> dict:
 
-    '''
-    This function takes in bill id, bill title and bill text as inputs and extracts relevant mgl section text and passes all this information
-    to an LLM to generate summary of a bill  
+    """
+    Generates a summary for a given legislative bill.
 
-    Arguments: 
-    
-    bill_id (str): ID of the bill
-    bill_title (str): Bill title
-    bill_text (str): Contents of the bill
+    This function processes the input bill information, extracts relevant context from the 
+    Massachusetts General Laws (MGL), and uses a language model to generate a concise summary.
 
-    Returns: 
-        A dict of status_code and an response 
-        status_code can take these following values {1: Success, -1: Necessary details not found}
+    Args:
+        bill_id (str): The unique identifier of the bill.
+        bill_title (str): The title of the bill.
+        bill_text (str): The full text content of the bill.
 
-    '''
+    Returns:
+        dict: A dictionary containing:
+            - 'status' (int): 1 if successful, -1 if necessary details were not found.
+            - 'summary' (str): The generated summary of the bill if successful, empty string otherwise.
 
+    Process:
+        1. Extracts relevant MGL sections referenced in the bill.
+        2. Creates a BillDetails object with bill information and extracted MGL context.
+        3. Calls the get_summary function to generate the summary using a language model.
+
+    Note:
+        The function relies on external functions like extract_bill_context and get_summary,
+        which should be properly implemented and available in the same scope.
+
+    Raises:
+        Any exceptions raised by the called functions (e.g., extract_bill_context, get_summary)
+        are not caught here and will propagate to the caller.
+    """
     # extract relevant mgl text
     combined_mgl, mgl_names = extract_bill_context(bill_text)
     
@@ -607,21 +626,36 @@ def get_summary_api_function(bill_id: str, bill_title: str, bill_text: str) -> d
         return {'status': status_code, 'summary': results.response}
 
 def get_tags_api_function(bill_id: str, bill_title: str, bill_text: str) -> dict:
-    '''
-    This function takes in bill id, bill title and bill text as inputs and extracts relevant mgl section text and passes all this information
-    to an LLM to generate tags for a bill  
-
-    Arguments: 
     
-    bill_id (str): ID of the bill
-    bill_title (str): Bill title
-    bill_text (str): Contents of the bill
+    """
+    Generates relevant tags for a given legislative bill.
 
-    Returns: 
-        A dict of status_code and an response
-        status_code can take these following values {1: Success, -1: Necessary details not found}
+    This function processes the input bill information, extracts relevant context from the 
+    Massachusetts General Laws (MGL), and uses a language model to generate appropriate tags.
 
-    '''
+    Args:
+        bill_id (str): The unique identifier of the bill.
+        bill_title (str): The title of the bill.
+        bill_text (str): The full text content of the bill.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'status' (int): 1 if successful, -1 if necessary details were not found.
+            - 'tags' (list): A list of generated tags if successful, empty list otherwise.
+
+    Process:
+        1. Extracts relevant MGL sections referenced in the bill.
+        2. Creates a BillDetails object with bill information and extracted MGL context.
+        3. Calls the get_tags function to generate tags using a language model.
+
+    Note:
+        The function relies on external functions like extract_bill_context and get_tags,
+        which should be properly implemented and available in the same scope.
+
+    Raises:
+        Any exceptions raised by the called functions (e.g., extract_bill_context, get_tags)
+        are not caught here and will propagate to the caller.
+    """
 
     # extract relevant mgl text
     combined_mgl, mgl_names = extract_bill_context(bill_text)
@@ -712,18 +746,34 @@ def get_summary(bill_details: BillDetails) -> tuple[int, LLMResults]:
     return 1, call_llm(bill_details, query, llm_call_type)
 
 def get_tags(bill_details: BillDetails) -> tuple[int, LLMResults]:
-    '''
-    This function takes in bill details object (bill title, bill text and reference mgl section text) and tags the bill. 
 
-    Arguments: 
+    """
+    Tags a legislative bill using a two-step process involving categorization and LLM-based tag selection.
 
-    bill_details (BillDetails): Object containing information about the bill - bill_text, bill_title, mgl_ref, commottee_info, mgl_names
+    This function processes the given bill details through two stages:
+    1. Categorization: The bill is classified into specified categories, and tags relevant to these categories are shortlisted.
+    2. Tag Selection: An LLM is prompted to choose the most appropriate tags from the shortlisted set.
 
-    Returns: 
-        A tuple of status_code and an LLMResults object containing query, response from the LLM
-        status_code can take these following values {1: Success, -1: Necessary details not found}
+    This method has been chosen based on extensive experimentation and effective evaluation.
 
-    '''
+    Args:
+        bill_details (BillDetails): An object containing comprehensive information about the bill, including:
+            - bill_text: The full text of the bill
+            - bill_title: The title of the bill
+            - mgl_ref: Reference to the Massachusetts General Laws section
+            - committee_info: Information about the committee handling the bill
+            - mgl_names: Names of relevant Massachusetts General Laws sections
+
+    Returns:
+        Tuple[int, LLMResults]: A tuple containing:
+            - status_code (int): Indicates the outcome of the tagging process
+                1: Success
+               -1: Necessary details not found
+            - LLMResults: An object containing the query and the LLM's response
+
+    Note:
+        The function requires all necessary bill details to be present in the BillDetails object for successful execution.
+    """
 
     if not all(hasattr(bill_details, attr) for attr in ("bill_text", 'bill_title', 'mgl_names', 'committee_info')): 
         return -1, LLMResults()
@@ -735,6 +785,9 @@ def get_tags(bill_details: BillDetails) -> tuple[int, LLMResults]:
     category_response = call_llm(bill_details, query_1, llm_call_type)
     categories = extract_categories_tags(category_response.response)
     category_tags = get_category_tags(categories)
+
+    # for cat, tags in new_tags_for_bill_dict.items(): category_tags += tags
+    
     query_2 = get_query_for_tagging(bill_details, category_tags, llm_call_type)
     tag_response = call_llm(bill_details, query_2, llm_call_type)
 
@@ -743,7 +796,29 @@ def get_tags(bill_details: BillDetails) -> tuple[int, LLMResults]:
 
     return 1, tag_response
 
-def extract_categories_tags(response: str):
+def extract_categories_tags(response: str) -> list:
+
+    """
+    Extracts categories or tags from a string response.
+
+    This function takes a string response where categories or tags are separated by '#' symbols,
+    splits the string at these separators, and returns a list of cleaned (stripped) categories or tags.
+
+    Args:
+        response (str): A string containing categories or tags separated by '#' symbols.
+
+    Returns:
+        List[str]: A list of extracted categories or tags, with leading and trailing whitespace removed.
+
+    Example:
+        >>> extract_categories_tags("Category1 # Category2 #Tag1# Tag2 ")
+        ['Category1', 'Category2', 'Tag1', 'Tag2']
+
+    Note:
+        This function assumes that the input string uses '#' as a delimiter between categories or tags.
+        Empty elements (resulting from consecutive '#' characters) will be removed from the final list.
+    """
+
     response = response.split('#')
     return [i.strip() for i in response]
 
@@ -771,154 +846,74 @@ def prepare_invoke_dict(bill_details: BillDetails) -> dict:
 
 def get_query_for_summarization(bill_details: BillDetails, llm_call_type: str) -> str:
     """
-        
-    This functions prepares a prompt based on the call type (small: No use of RAG, large: Use RAG) for bill summarization
+    Prepares a prompt for bill summarization based on the specified LLM call type.
 
-    Args: 
-        bill_details (BillDetails): Object containing information about the bill - bill_text, bill_title, mgl_ref, commottee_info, mgl_names
-        llm_call_type (str): This argument can take 2 values ("small": No use of RAG, "large": Use RAG) 
+    This function constructs a query string for summarizing a legislative bill. It uses 
+    predefined templates for small and large LLM call types, ensuring consistency across 
+    different parts of the application.
 
-    Returns: 
-        str: Query that includes task, context and instructions on summary generation
+    Args:
+        bill_details (BillDetails): Object containing bill information. This object may 
+                                    be modified in place for 'small' call types.
+        llm_call_type (str): Specifies the type of LLM call to make. 
+                             Can be either "small" (standard approach) or "large" (RAG approach).
 
+    Returns:
+        str: A formatted query string containing the task description, context, and instructions
+             for bill summarization.
+
+    Note:
+        If llm_call_type is 'small', this function will update the `invoke_dict` attribute of 
+        the `bill_details` object.
     """
-
     
     if llm_call_type == 'large':
-        query = f""" 
-                    Can you please explain what the following MA bill means to a regular resident without specialized knowledge? \n
-                    Please provide a one paragraph summary in a maximum of 4 sentences. Please be simple, direct and concise for the busy reader. \n
-                    Please use politically neutral language, keeping in mind that readers may have various ideological perspectives. \n
-                    Make bullet points if possible. 
-
-                    Note that the bill refers to specific existing chapters and sections of the Mass General Laws (MGL). Use the corresponding names of Mass General Law chapter and sections for constructing your summary.\n
-
-                    The bill title is: {getattr(bill_details, "bill_title")}\n
-
-                    The bill text is: {getattr(bill_details, "bill_text")}\n  
-
-                    The relevant section names are: {getattr(bill_details, "mgl_names")}\n
-                    
-                    The relevant committee information if available: {getattr(bill_details, "committee_info")}\n
-
-                    INSTRUCTIONS: 
-
-                    1. Only provide Summary, no other details are required. \n
-                    2. Do not provide tags or other extraneous text besides the summary. \n    
-                    3. Do not cite the title of the bill - the reader will already know that \n
-                    4. Do not cite specific section, chapter or title numbers of the MGL - the reader will not know what those sections are. \n
-                    5. Do not reference that this is a “MA” or “Massachusetts” bill - the reader will already know that. \n
-                    6. If referencing dates or other provisions of the bill, say that "this would happen if the bill is passed" rather than "this will happen". \n
-
-                    RESPONSE FORMAT:\n\n                Summary: [SUMMARY]
-                    """    
-
-    else: 
-        query = """
-                Can you please explain what the following MA bill means to a regular resident without specialized knowledge? \n
-                Please provide a one paragraph summary in a maximum of 4 sentences. Please be simple, direct and concise for the busy reader. \n
-                Please use politically neutral language, keeping in mind that readers may have various ideological perspectives. \n
-                Make bullet points if possible. 
-
-                Note that the bill refers to specific existing chapters and sections of the Mass General Laws (MGL). Use the corresponding names of Mass General Law chapter and sections for constructing your summary.\n
-
-                The bill title is: \"{title}"\
-
-                The bill text is: \"{context}"\
-
-                The relevant section names are: \"{names}"\
-
-                The relevant section text is: \"{mgl_sections}"\
-                
-                The relevant committee information if available: \"{committee_info}"\
-
-                INSTRUCTIONS: 
-
-                1. Only provide Summary, no other details are required. \n
-                2. Do not provide tags or other extraneous text besides the summary. \n    
-                3. Do not cite the title of the bill - the reader will already know that \n
-                4. Do not cite specific section, chapter or title numbers of the MGL - the reader will not know what those sections are. \n
-                5. Do not reference that this is a “MA” or “Massachusetts” bill - the reader will already know that. \n
-                6. If referencing dates or other provisions of the bill, say that "this would happen if the bill is passed" rather than "this will happen". \n
-
-                RESPONSE FORMAT:\n\n                Summary: [SUMMARY]
-                """
+        query = SUMMARIZATION_PROMPT_LARGE.format(
+            bill_title=getattr(bill_details, "bill_title"),
+            bill_text=getattr(bill_details, "bill_text"),
+            mgl_names=getattr(bill_details, "mgl_names"),
+            committee_info=getattr(bill_details, "committee_info")
+        )
+    else:
         bill_details.invoke_dict = prepare_invoke_dict(bill_details)
+        query = SUMMARIZATION_PROMPT_SMALL
 
     return query
 
 def get_query_for_categorizing(bill_details: BillDetails, llm_call_type: str) -> str: 
+
     """
-        
-    This functions prepares a prompt based on the call type (small: No use of RAG, large: Use RAG) for bill categoruzation
+    Prepares a prompt for bill categorization based on the specified LLM call type.
 
-    Args: 
-        bill_details (BillDetails): Object containing information about the bill - bill_text, bill_title, mgl_ref, commottee_info, mgl_names, category_list(If new categories things are added)
-        llm_call_type (str): This argument can take 2 values ("small": No use of RAG, "large": Use RAG) 
+    This function constructs a query string for categorizing a legislative bill. It uses 
+    predefined templates for small and large LLM call types, ensuring consistency across 
+    different parts of the application.
 
-    Returns: 
-        str: Query that includes task, context and instructions on bill categorization
+    Args:
+        bill_details (BillDetails): Object containing bill information. This object may 
+                                    be modified in place for 'small' call types.
+        llm_call_type (str): Specifies the type of LLM call to make. 
+                             Can be either "small" (standard approach) or "large" (RAG approach).
 
+    Returns:
+        str: A formatted query string containing the task description, context, and instructions
+             for bill categorization.
+
+    Note:
+        If llm_call_type is 'small', this function will update the `invoke_dict` attribute of 
+        the `bill_details` object inplace.
     """
 
     if llm_call_type == 'large':
-        query = f""" Your job is to classify the bill according to the list of categories below. 
-                    Choose the closest relevant category and do not output categories outside of this list. 
-                    Please be politically neutral, keeping in mind that readers may have various ideological perspectives. 
-                    Use the information from specified chapters and sections of the Mass General Laws to categorize the bill.
-
-                    List of Categories:
-                    {getattr(bill_details, 'categories', new_categories_for_bill_list)}
-
-                    Note that the bill refers to specific existing chapters and sections of the Mass General Laws. Use the corresponding names of Mass General Law chapter and sections for constructing your summary.\n
-
-                    The bill title is: {getattr(bill_details, 'bill_title')} \n
-
-                    The bill text is: \n {getattr(bill_details, 'bill_text')}
-                    
-                    The relevant committee information: {getattr(bill_details, 'committee_info')}
-
-                    The relevant section names are: {getattr(bill_details, "mgl_names")}
-
-
-                    INSTRUCTIONS: 
-                    1. Choose just 2 categories from the list above.
-                    2. Do not provide explanations for the category choices.
-                    3. Do not output categories not listed above.
-                    4. Do not modify or paraphrase the category names, choose directly from the list provided.
-                    5. Respond with # separated categories
-
-                    Categories: """
+        query = CATEGORIZATION_PROMPT_LARGE.format(
+            categories=getattr(bill_details, 'categories', new_categories_for_bill_list),
+            bill_title=getattr(bill_details, 'bill_title'),
+            bill_text=getattr(bill_details, 'bill_text'),
+            committee_info=getattr(bill_details, 'committee_info'),
+            mgl_names=getattr(bill_details, "mgl_names")
+        )
     else: 
-        query = """ 
-                Your job is to classify the bill according to the list of categories below. 
-                Choose the closest relevant category and do not output categories outside of this list. 
-                Please be politically neutral, keeping in mind that readers may have various ideological perspectives. 
-                Use the information from specified chapters and sections of the Mass General Laws to categorize the bill.
-
-                List of Categories:
-                {categories}
-
-                Note that the bill refers to specific existing chapters and sections of the Mass General Laws. Use the corresponding names of Mass General Law chapter and sections for constructing your summary.\n
-
-                The bill title is: \"{title}"\
-
-                The bill text is: \"{context}"\
-                
-                The relevant committee information: \"{committee_info}"\
-
-                The relevant section names are: \"{names}"\
-
-                The relevant section text is: \"{mgl_sections}"
-
-                INSTRUCTIONS: 
-                1. Choose just 2 categories from the list above.
-                2. Do not provide explanations for the category choices.
-                3. Do not output categories not listed above.
-                4. Do not modify or paraphrase the category names, choose directly from the list provided.
-                5. Respond with # separated categories
-
-                Categories: """
+        query = CATEGORIZATION_PROMPT_SMALL
         bill_details.invoke_dict = prepare_invoke_dict(bill_details)
         bill_details.invoke_dict['categories'] = getattr(bill_details, 'categories', new_categories_for_bill_list)
 
@@ -927,80 +922,40 @@ def get_query_for_categorizing(bill_details: BillDetails, llm_call_type: str) ->
 def get_query_for_tagging(bill_details: BillDetails, category_tags: list, llm_call_type: str) -> str: 
 
     """
-        
-    This functions prepares a prompt based on the call type (small: No use of RAG, large: Use RAG) for bill tagging
+    Prepares a prompt for bill tagging based on the specified LLM call type.
 
-    Args: 
-        bill_details (BillDetails): Object containing information about the bill - bill_text, bill_title, mgl_ref, commottee_info, mgl_names
-        category_tags (List): List of tags that the model has to filter from. 
-        llm_call_type (str): This argument can take 2 values ("small": No use of RAG, "large": Use RAG) 
+    This function constructs a query string for tagging a legislative bill. It uses 
+    predefined templates for small and large LLM call types, ensuring consistency across 
+    different parts of the application.
 
-    Returns: 
-        str: Query that includes task, context and instructions on bill tagging. 
+    Args:
+        bill_details (BillDetails): Object containing bill information. This object may 
+                                    be modified in place for 'small' call types.
+        category_tags (list): List of tags that the model has to filter from.
+        llm_call_type (str): Specifies the type of LLM call to make. 
+                             Can be either "small" (standard approach) or "large" (RAG approach).
 
+    Returns:
+        str: A formatted query string containing the task description, context, and instructions
+             for bill tagging.
+
+    Note:
+        If llm_call_type is 'small', this function will update the `invoke_dict` attribute of 
+        the `bill_details` object.
     """
 
     if llm_call_type == 'large':
-        query = f""" 
-                Your Job here is to identify the tags that can be associated to the following MA Legislative bill. 
-                Choose the closest relevant tags and do not output tags outside of the provided tags. 
-                Please be politically neutral, keeping in mind that readers may have various ideological perspectives. 
-                Note that the bill refers to specific existing chapters and sections of the Mass General Laws. Use the information from those chapters and sections in your context for tagging.
-
-                
-                List of tags: 
-                - {category_tags}
-
-                The bill title is: {getattr(bill_details, 'bill_title')}
-
-                The bill text is: \n{getattr(bill_details, 'bill_text')}\n
-                
-                The relevant committee information: {getattr(bill_details, 'committee_info')}
-
-                The relevant section names are: {getattr(bill_details, "mgl_names")}
-
-                INSTRUCTIONS: 
-                1. Choose a maximum of up to 5 tags.
-                2. Do not provide explanations for the tag choices.
-                3. Do not output tags not listed above.
-                4. Do not modify or paraphrase the tag names, choose directly from the list provided.
-                5. Do not assign tags only for the sake of tagging; tag them only if they are relevant.
-                6. Respond with # separated tags.
-
-                Tags: """
+        query = TAGGING_PROMPT_LARGE.format(
+            category_tags=', '.join(category_tags),
+            bill_title=getattr(bill_details, 'bill_title'),
+            bill_text=getattr(bill_details, 'bill_text'),
+            committee_info=getattr(bill_details, 'committee_info'),
+            mgl_names=getattr(bill_details, "mgl_names")
+        )
 
     else: 
 
-        query = """ 
-                Your Job here is to identify the tags that can be associated to the following MA Legislative bill. 
-                Choose the closest relevant tags and do not output tags outside of the provided tags. 
-                Please be politically neutral, keeping in mind that readers may have various ideological perspectives. 
-                Note that the bill refers to specific existing chapters and sections of the Mass General Laws. Use the information from those chapters and sections in your context for tagging.
-
-                
-                List of tags: 
-                - {category_tags}
-
-                The bill title is: \"{title}"\
-
-                The bill text is: \"{context}"\
-                
-                The relevant committee information: \"{committee_info}"\
-
-                The relevant section names are: \"{names}"\
-
-                The relevant section text is: \"{mgl_sections}"
-
-                INSTRUCTIONS: 
-                1. Choose minimum of 3 tags and no more than 5.
-                2. Do not provide explanations for the tag choices.
-                3. Do not output tags not listed above.
-                4. Do not modify or paraphrase the tag names, choose directly from the list provided.
-                5. Do not assign tags only for the sake of tagging; tag them only if they are relevant.
-                6. Respond with # separated tags.
-                
-                Tags: """
-
+        query =TAGGING_PROMPT_SMALL
         bill_details.invoke_dict = prepare_invoke_dict(bill_details)
         bill_details.invoke_dict['category_tags'] = category_tags
 
@@ -1020,7 +975,6 @@ def call_llm(bill_details: BillDetails, query: str, llm_call_type: str = 'small'
         LLMResults: Object containing query, response (Raw unformatted response from model) and metrics (If requested)
 
     """
-    set_openai_api_key()
 
     llm = ChatOpenAI(temperature = 0, model = GPT_MDOEL_VERSION, model_kwargs = {'seed': 42})
 
@@ -1059,7 +1013,31 @@ def small_docs(bill_details: BillDetails, query: str, llm: ChatOpenAI) -> str:
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
-def get_or_create_embeddings(bill_details: BillDetails, emb_api: OpenAIEmbeddings): 
+def get_or_create_embeddings(bill_details: BillDetails, emb_api: OpenAIEmbeddings) -> chromadb.PersistentClient: 
+
+    """
+    Retrieves existing embeddings or creates new ones for a given bill.
+
+    This function checks if embeddings for a specific bill already exist in the Chroma database.
+    If they don't exist, it creates new embeddings using the provided OpenAI Embeddings API.
+
+    Args:
+        bill_details (BillDetails): An object containing details about the bill, including its ID and text.
+        emb_api (OpenAIEmbeddings): An instance of the OpenAI Embeddings API for creating embeddings.
+
+    Returns:
+        chromadb.PersistentClient: A client instance for the Chroma database where embeddings are stored.
+
+    Notes:
+        - The function uses a persistent Chroma database located at CHROMA_DB_PATH.
+        - If embeddings for the bill don't exist, it creates them using a TokenTextSplitter
+          with a chunk size of 2000 and overlap of 200.
+        - New embeddings are added to the database with metadata including the bill ID.
+
+    Raises:
+        Any exceptions raised by Chroma operations or the embedding process are not caught
+        and will propagate to the caller.
+    """
 
     bill_id = bill_details.bill_id
     client = chromadb.PersistentClient(CHROMA_DB_PATH)
