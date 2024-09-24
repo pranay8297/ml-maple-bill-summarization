@@ -646,7 +646,6 @@ def get_tags_api_function(bill_id: str, bill_title: str, bill_text: str) -> dict
         return {'status': status_code, 'tags': results.response}
 
 def get_llm_call_type(bill_details: BillDetails) -> str:
-
     """
     This function calculates number of tokens and decides on weather to use RAG or not. It reutrns a string output
     that specifies how to call the LLM. 
