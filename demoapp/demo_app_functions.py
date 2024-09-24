@@ -607,7 +607,6 @@ def get_summary_api_function(bill_id: str, bill_title: str, bill_text: str) -> d
         return {'status': status_code, 'summary': results.response}
 
 def get_tags_api_function(bill_id: str, bill_title: str, bill_text: str) -> dict:
-
     '''
     This function takes in bill id, bill title and bill text as inputs and extracts relevant mgl section text and passes all this information
     to an LLM to generate tags for a bill  
