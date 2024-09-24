@@ -1034,7 +1034,6 @@ def call_llm(bill_details: BillDetails, query: str, llm_call_type: str = 'small'
     return return_obj
 
 def small_docs(bill_details: BillDetails, query: str, llm: ChatOpenAI) -> str:
-
     """
         
     This function calls the LLM without using RAG - Generally used if token count is less than 128k
