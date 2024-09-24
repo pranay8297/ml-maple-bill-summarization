@@ -770,7 +770,6 @@ def prepare_invoke_dict(bill_details: BillDetails) -> dict:
             }
 
 def get_query_for_summarization(bill_details: BillDetails, llm_call_type: str) -> str:
-
     """
         
     This functions prepares a prompt based on the call type (small: No use of RAG, large: Use RAG) for bill summarization
