@@ -669,7 +669,6 @@ def get_llm_call_type(bill_details: BillDetails) -> str:
     return 'small' if num_tokens < MAX_TOKEN_LIMIT - 5000 else 'large'
 
 def get_category_tags(categories: List) -> List:
-
     """
     This function takes in list of categories and returns tags pertinant to that specifc categories only. 
 
